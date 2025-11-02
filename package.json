@@ -1,5 +1,5 @@
 {
-  "name": "microservice-nodejs-template",
+  "name": "transcription-service",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,11 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-sfn": "^3.651.1",
     "@cloudamqp/amqp-client": "^3.3.2",
     "cron": "^4.3.3",
-    "express": "^5.1.0",
-    "pino": "^10.1.0",
-    "pino-pretty": "^13.1.2"
+    "express": "^5.1.0"
   },
   "type": "module"
 }
