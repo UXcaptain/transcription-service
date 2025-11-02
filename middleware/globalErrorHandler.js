@@ -1,4 +1,4 @@
-import { publishDirect, publishLogs } from "../config/messageBroker/LavinMQ.js";
+import { publishLogs } from "../config/messageBroker/LavinMQ.js";
 
 
 export const globalErrorHandler = (err, req, res, next) => {
