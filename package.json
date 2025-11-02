@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node --watch --env-file=.env index.js"
+    "start": "node --watch --env-file=.env index.js",
+    "start:docker": "node index.js"
+
   },
   "keywords": [],
   "author": "",

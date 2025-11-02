@@ -27,4 +27,4 @@ USER node
 EXPOSE 3000
 
 # Set the default command to run the local startup script
-CMD ["npm", "run", "start"] 
+CMD ["npm", "run", "start:docker"] 
