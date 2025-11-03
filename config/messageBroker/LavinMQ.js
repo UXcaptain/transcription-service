@@ -1,8 +1,9 @@
 import { AMQPClient } from '@cloudamqp/amqp-client'
+import { requestAnalysisEntryTranscription } from '../../integrations/AWS/transcriptionJob.js';
 
 let connection;
 let channel;
-let exampleDirectQueue;
+let transcriptionQueue
 let logsQueue
 
 // Main AMQP setup function
@@ -16,7 +17,6 @@ export const connectToMessageBroker = async () => {
     channel = await connection.channel(100); // One channel for producing & consuming messages
 
     // 3. Declare exchanges & queues & bindings
-
 
       // 3.1 logs_exchange, logs_queue, bindings
 
@@ -38,10 +38,10 @@ export const connectToMessageBroker = async () => {
           // no args
         });
 
-        // 3.2 example_exchange, example_queue, bindings // * use this as a base for queues
+        // 3.2 transcription_exchange, transcription_queue, bindings // * use this as a base for queues
 
           //* Declare exchange
-        const exampleDirectExchange = await channel.exchangeDeclare('example_direct_exchange', 'direct' , { // Name , type
+        const transcriptionExchange = await channel.exchangeDeclare('transcription_exchange', 'direct' , { // Name , type
             durable: true,
             passive: false,
             autoDelete: false,
@@ -49,7 +49,7 @@ export const connectToMessageBroker = async () => {
           })
 
           //* Declare queue
-        exampleDirectQueue = await channel.queue('example_direct_queue', { // queue name
+        transcriptionQueue = await channel.queue('transcription_queue', { // queue name
             durable: true,
             passive: false,
             autoDelete: false,
@@ -57,44 +57,31 @@ export const connectToMessageBroker = async () => {
           });
 
           //* Bind queue to exchange with routing key
-        await exampleDirectQueue.bind('example_direct_exchange', 'service.action', { // queue name, exchange name, routing key // * '*' Allows for wildcard matching in routing keys - '#' allows for multiple levels of routing keys
+        await transcriptionQueue.bind('transcription_exchange', 'transcription.request', { // queue name, exchange name, routing key
           });
-          
-          //*  Note on routing keys:
-          /* It a best practice to use dot notation for routing keys to represent a hierarchy of topics
-          ie: 'service.action.id' where service is the service name, action is the action being performed, and id is the specific identifier - This way, you can easily filter messages based on the service, action, or specific identifier. - topic-type exchanges And use wildcards - eg: 'transcript.request.*' <-- Would request a transcript of every id
-          */
-
-    // 4. Set up producer/s
-  
-      // await exampleDirectQueue.publish('{"text":"hello", "id": "123", "type": "case1"}');
-
-      // await logsQueue.publish('{"type":"event", "name": "requested AWS transcript"}');
     
-  // 5. Set up consumer/s
+  // 4. Set up consumer/s
 
-    const consumer = await exampleDirectQueue.subscribe({ noAck: false }, async (msg) => {
+    const consumer = await transcriptionQueue.subscribe({ noAck: false }, async (msg) => {
       try {
-        const contentStr = msg.bodyToString();
-        console.log('Received message:', contentStr);
-        
+        const contentStr = msg.bodyToString();     
+        console.log(contentStr)   
         const content = JSON.parse(contentStr);
-        console.log('content', content)
+        console.log('Processing transcription message:', content);
 
-        switch (content.type) {
-          case 'case1':
-            console.log('Processing case1 message')
-            // doSomething();
+        switch (content.mediaType) {
+          case 'video':
+            console.log('Processing video transcription message')
+            await requestAnalysisEntryTranscription(content)
             break;
-          
-          case 'case2':
-            // doSomething();
+          case 'audio': //* Currently not used
+            console.log('Processing audio transcription message')
+            // process as required
             break;
           
           default:
-            console.log(`[⚠️] Unknown message type: ${content.type}`);
+            console.log(`[⚠️] Unknown media type: ${content.mediaType}`);
             break;
-
         }
 
         // Acknowledge message after processing
@@ -105,23 +92,13 @@ export const connectToMessageBroker = async () => {
       }
     });
     
-    console.log('service connected to LavinMQ message broker')
+    console.log('transcription service successfully connected to LavinMQ message broker')
 
-    return { connection: connection, channel: channel, exampleDirectExchange, exampleDirectQueue };
+    return { connection: connection, channel: channel, transcriptionExchange, transcriptionQueue };
   } catch (e) {
     console.error("ERROR", e);
     e.connection?.close();
     setTimeout(connectToMessageBroker, 1000); // will try to reconnect in 1s
-  }
-}
-
-// function for publishing to direct queue
-export const publishDirect = async (message) => {
-  console.log(`publishing to exampleDirectQueue message function called`);
-  try {
-    await exampleDirectQueue.publish(message);
-  } catch (err) {
-    console.error('Error publishing direct message:', err);
   }
 }
 
