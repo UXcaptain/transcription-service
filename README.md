@@ -95,17 +95,17 @@ publishLogs('{"timestamp": "2025-11-01T16:00:00Z", "service": "transcription-ser
 
 ### Consuming Messages
 
-The service automatically consumes messages from the `example_direct_queue` and processes them based on their type:
+The service automatically consumes messages from the `transcription_queue` and processes them based on their type:
 
 ```javascript
 switch (content.type) {
-  case 'case1':
+  case 'video':
     console.log('Processing case1 message')
-    // doSomething();
+    proccessingFunction();
     break;
   
-  case 'case2':
-    // doSomething();
+  case 'audio':
+    proccessingFunction();
     break;
   
   default:
@@ -118,14 +118,12 @@ switch (content.type) {
 
 ```mermaid
 graph TD
-    A[Client] -->|HTTP Request| B(Express.js Server)
-    B --> C{Message Broker<br/>LavinMQ/RabbitMQ}
-    C --> D[Direct Exchange]
-    C --> E[Topic Exchange]
-    D --> F[Direct Queue]
-    E --> G[Logs Queue]
-    F --> H[Message Consumer]
-    G --> I[Logs Consumer]
+    
+    C{Message Broker<br/>LavinMQ}
+    C --> D[analysis_exchange]
+    D --> F[transcription_queue]
+    F --> D[analysis_exchange]
+    D --> I[insights_queue]
 ```
 
 ## Design Patterns
@@ -156,10 +154,10 @@ The message broker implementation uses the Publisher-Subscriber pattern for asyn
 
 ```javascript
 // Publisher
-await exampleDirectQueue.publish(message);
+await transcriptionQueue.publish(message);
 
 // Subscriber
-const consumer = await exampleDirectQueue.subscribe({ noAck: false }, async (msg) => {
+const consumer = await transcriptionQueue.subscribe({ noAck: false }, async (msg) => {
   // Process message
   await msg.ack(); // Acknowledge message
 });
@@ -176,7 +174,7 @@ app.use(globalErrorHandler);
 
 ## Logging
 
-The template sends logs to a dedicated queue for centralized logging
+TODO -- IMPLEMENT LOGGING
 
 ## Graceful Shutdown
 

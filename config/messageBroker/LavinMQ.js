@@ -1,10 +1,31 @@
 import { AMQPClient } from '@cloudamqp/amqp-client'
-import { requestAnalysisEntryTranscription } from '../../integrations/AWS/transcriptionJob.js';
+import { handleTranscriptionRequestedQueue } from './transcriptionService.js';
 
 let connection;
 let channel;
-let transcriptionQueue
+let transcriptionRequestedQueue
+let transcriptionCompletedQueue
+let insightsRequestedQueue
 let logsQueue
+
+
+const startConsumers = async () => {
+  try {
+    const transcriptionConsumer = await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
+        try {
+          await handleTranscriptionRequestedQueue(msg)
+          await msg.ack();
+        } catch (error) {
+          console.log('error processing message')
+          await msg.nack(true); // Requeue on failure
+        }
+    });
+
+    console.log('consumers started successfully')
+  } catch (err) {
+    console.log(err);
+  }
+};
 
 // Main AMQP setup function
 export const connectToMessageBroker = async () => {
@@ -14,11 +35,11 @@ export const connectToMessageBroker = async () => {
     connection = await amqp.connect(); // Establish connection to the message broker - one connection for all channels
 
     // 2. Open producer and consumer channels
-    channel = await connection.channel(100); // One channel for producing & consuming messages
+    channel = await connection.channel(); // One channel for producing & consuming messages
 
     // 3. Declare exchanges & queues & bindings
 
-      // 3.1 logs_exchange, logs_queue, bindings
+      // 3.1 declare exchanges
 
         const logsExchange = await channel.exchangeDeclare('logs_exchange', 'topic', {
             durable: true,
@@ -27,74 +48,64 @@ export const connectToMessageBroker = async () => {
             internal: false,
           });
 
-        logsQueue = await channel.queue('logs_queue', { // queue name
+        
+          const analysisExchange = await channel.exchangeDeclare('analysis_exchange', 'topic' , {
+              durable: true,
+              passive: false,
+              autoDelete: false,
+              internal: false,
+            })
+
+        // 3.2 declare queues
+
+        logsQueue = await channel.queue('logs_queue', {
             durable: true,
             passive: false,
             autoDelete: false,
             exclusive: false,
+          });
+
+        transcriptionRequestedQueue = await channel.queue('transcription_requested_queue', {
+            durable: true,
+            passive: false,
+            autoDelete: false,
+            exclusive: false,
+          });
+
+        transcriptionCompletedQueue = await channel.queue('transcription_completed_queue', {
+            durable: true,
+            passive: false,
+            autoDelete: false,
+            exclusive: false,
+          });
+
+        insightsRequestedQueue = await channel.queue('insights_requested_queue', {
+            durable: true,
+            passive: false,
+            autoDelete: false,
+            exclusive: false,
+          });
+
+          // 3.3 Bind queues to exchange with routing key
+        await transcriptionRequestedQueue.bind('analysis_exchange', 'analysis.analysisEntry.transcription.requested', {
+          });
+
+        await transcriptionCompletedQueue.bind('analysis_exchange', 'analysis.analysisEntry.transcription.completed', {
+          });
+
+        await insightsRequestedQueue.bind('analysis_exchange', 'analysis.analysisEntry.insights.requested', {
           });
 
         await logsQueue.bind('logs_exchange', "logs.#", {
-          // no args
+        // no args
         });
-
-        // 3.2 transcription_exchange, transcription_queue, bindings // * use this as a base for queues
-
-          //* Declare exchange
-        const transcriptionExchange = await channel.exchangeDeclare('transcription_exchange', 'direct' , { // Name , type
-            durable: true,
-            passive: false,
-            autoDelete: false,
-            internal: false,
-          })
-
-          //* Declare queue
-        transcriptionQueue = await channel.queue('transcription_queue', { // queue name
-            durable: true,
-            passive: false,
-            autoDelete: false,
-            exclusive: false,
-          });
-
-          //* Bind queue to exchange with routing key
-        await transcriptionQueue.bind('transcription_exchange', 'transcription.request', { // queue name, exchange name, routing key
-          });
     
   // 4. Set up consumer/s
 
-    const consumer = await transcriptionQueue.subscribe({ noAck: false }, async (msg) => {
-      try {
-        const contentStr = msg.bodyToString();     
-        console.log(contentStr)   
-        const content = JSON.parse(contentStr);
-        console.log('Processing transcription message:', content);
-
-        switch (content.mediaType) {
-          case 'video':
-            console.log('Processing video transcription message')
-            await requestAnalysisEntryTranscription(content)
-            break;
-          case 'audio': //* Currently not used
-            console.log('Processing audio transcription message')
-            // process as required
-            break;
-          
-          default:
-            console.log(`[⚠️] Unknown media type: ${content.mediaType}`);
-            break;
-        }
-
-        // Acknowledge message after processing
-        await msg.ack();
-      } catch (err) {
-        console.error("[⚠️] Error processing transcription message:", err);
-        await msg.nack(true); // Requeue on failure
-      }
-    });
+    startConsumers();
     
     console.log('transcription service successfully connected to LavinMQ message broker')
-
-    return { connection: connection, channel: channel, transcriptionExchange, transcriptionQueue };
+    return { connection: connection, channel: channel, analysisExchange, transcriptionRequestedQueue: transcriptionRequestedQueue };
   } catch (e) {
     console.error("ERROR", e);
     e.connection?.close();
@@ -112,3 +123,11 @@ export const publishLogs = async (message) => {
   }
 }
 
+export const publishToInsightsRequestedQueue = async (message) => {
+  console.log(`publishing to insightsQueue message function called`);
+  try {
+    await insightsRequestedQueue.publish(message);
+  } catch (err) {
+    console.error('Error publishing insights message:', err);
+  }
+}
