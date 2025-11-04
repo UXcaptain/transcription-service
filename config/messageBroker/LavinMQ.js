@@ -11,7 +11,7 @@ let logsQueue
 
 const startConsumers = async () => {
   try {
-    const transcriptionConsumer = await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
+    const transcriptionRequestedConsumer = await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
         try {
           await handleTranscriptionRequestedQueue(msg)
           await msg.ack();
