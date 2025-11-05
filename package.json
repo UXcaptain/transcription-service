@@ -6,13 +6,12 @@
   "scripts": {
     "start": "node --watch --env-file=.env index.js",
     "start:docker": "node index.js"
-
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-sfn": "^3.651.1",
+    "@aws-sdk/client-transcribe": "^3.651.1",
     "@cloudamqp/amqp-client": "^3.3.2",
     "cron": "^4.3.3",
     "express": "^5.1.0"
