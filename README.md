@@ -119,11 +119,11 @@ switch (content.type) {
 ```mermaid
 graph TD
     
-    C{Message Broker<br/>LavinMQ}
-    C --> D[analysis_exchange]
-    D --> F[transcription_queue]
-    F --> D[analysis_exchange]
-    D --> I[insights_queue]
+    A{Message Broker<br/>LavinMQ}
+    A --> B[analysis_exchange]
+    B --> C[transcription_requested_queue]
+    C --> A[Process transcription request]
+    B --> D[transcription_completed_queue]
 ```
 
 ## Design Patterns
