@@ -2,17 +2,21 @@ import { requestAnalysisEntryTranscription } from '../../integrations/AWS/transc
 
 
 export const handleTranscriptionRequestedQueue = async (msg) => {
-        const contentStr = msg.bodyToString();     
-        const content = JSON.parse(contentStr);
-    
-    switch (content.mediaType) {
+        const contentStr = msg.bodyToString();
+
+        let transcriptionRequest;
+
+        transcriptionRequest = JSON.parse(contentStr);        
+
+    switch (transcriptionRequest.mediaType) {
         case 'video':
-            console.log('Processing video transcription message')
-            await requestAnalysisEntryTranscription(content)
+            // console.log('Processing video transcription message') //* Debug
+            console.log(transcriptionRequest.outputBucket)
+            await requestAnalysisEntryTranscription(transcriptionRequest)
         break;
 
         default:
-            console.log(`[⚠️] Unknown media type: ${content.mediaType}`);
+            console.log(`[⚠️] Unknown media type: ${transcriptionRequest.mediaType}`);
         break;
         }
 }

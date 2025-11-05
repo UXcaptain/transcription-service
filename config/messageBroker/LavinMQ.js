@@ -16,8 +16,9 @@ const startConsumers = async () => {
           await handleTranscriptionRequestedQueue(msg)
           await msg.ack();
         } catch (error) {
-          console.log('error processing message')
+          console.log('error processing message', error)
           await msg.nack(true); // Requeue on failure
+          // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
         }
     });
 
@@ -102,7 +103,10 @@ export const connectToMessageBroker = async () => {
     
   // 4. Set up consumer/s
 
-    startConsumers();
+    await startConsumers();
+    
+    // await publishDebuggingCallToTranscriptionRequestedQueue() //* uncomment to send an example message to transcriptionRequestedQueue
+          
     
     console.log('transcription service successfully connected to LavinMQ message broker')
     return { connection: connection, channel: channel, analysisExchange, transcriptionRequestedQueue: transcriptionRequestedQueue };
@@ -130,4 +134,21 @@ export const publishToInsightsRequestedQueue = async (message) => {
   } catch (err) {
     console.error('Error publishing insights message:', err);
   }
+}
+
+const publishDebuggingCallToTranscriptionRequestedQueue = async () => {
+  const message = {
+              analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
+              analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',
+              timestamp: new Date().toISOString(),
+              mediaType: 'video',
+              languageCode: 'es-ES',
+              outputBucket: 'dev-analysis-entry-storage',
+          };
+
+          const stringifiedMessage = JSON.stringify(message);
+
+          setTimeout(() => {
+            transcriptionRequestedQueue.publish(stringifiedMessage)
+          }, 5000);  
 }
