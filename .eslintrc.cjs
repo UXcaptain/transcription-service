@@ -44,5 +44,6 @@ module.exports = {
     'import/no-relative-packages': 'off',
     'no-case-declarations': 'off',
     'max-len': 'off',
+    'no-console': 'off',
   },
 };
