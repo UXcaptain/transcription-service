@@ -59,3 +59,21 @@ export const getTranscriptionJobDetailsFromDb = async (transcriptionJobDetails) 
 
   return transcriptionJobDetailsResult;
 };
+
+export const markTranscriptionAsSentToQueue = async (transcriptionJobInsertId) => {
+  const db = await connectToMongoDB();
+
+  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+
+  const updateResult = await videoTranscriptionsCollection.updateOne(
+    { _id: transcriptionJobInsertId },
+    {
+      $set: {
+        sentToQueue: true,
+        updatedAt: new Date(),
+      },
+    },
+  );
+
+  return updateResult;
+};
