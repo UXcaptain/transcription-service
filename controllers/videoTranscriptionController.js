@@ -3,7 +3,8 @@ import { updateCompletedVideoTranscriptionJobsInDb, updateSingleVideoTranscriptR
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
-    const completedTranscriptionJobsSummary = await getCompletedTranscriptionJobs();
+    // Get the completed Jobs from AWS Transcribe
+    const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
 
     await updateCompletedVideoTranscriptionJobsInDb(completedTranscriptionJobsSummary);
   } catch (error) {
