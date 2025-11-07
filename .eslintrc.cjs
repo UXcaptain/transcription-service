@@ -45,5 +45,6 @@ module.exports = {
     'no-case-declarations': 'off',
     'max-len': 'off',
     'no-console': 'off',
+    'no-await-in-loop': 'off',
   },
 };
