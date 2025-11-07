@@ -97,7 +97,7 @@ export const connectToMessageBroker = async () => {
   }
 };
 
-export const publishTranscriptionCompletedQueue = async (message) => {
+export const publishToTranscriptionCompletedQueue = async (message) => {
   try {
     await transcriptionCompletedQueue.publish(message);
   } catch (err) {
