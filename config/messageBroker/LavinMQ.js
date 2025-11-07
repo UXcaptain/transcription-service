@@ -1,28 +1,40 @@
 import { AMQPClient } from '@cloudamqp/amqp-client';
-import { handleTranscriptionRequestedQueue } from './transcriptionService.js';
+import { insertVideoTranscriptRequestInDb } from '../../models/videoTranscriptionModel.js';
+import { transcriptAnalysisEntry } from '../../controllers/videoTranscriptionController.js';
 
 let connection;
 let channel;
 let transcriptionRequestedQueue;
 let transcriptionCompletedQueue;
-let logsQueue;
 
 const startConsumers = async () => {
   try {
-    const transcriptionRequestedConsumer = await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
+    // TranscriptionRequestedConsumer
+    await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
       try {
-        await handleTranscriptionRequestedQueue(msg);
-        await msg.ack();
+        const contentStr = msg.bodyToString();
+        const transcriptionRequest = JSON.parse(contentStr);
+
+        const videoTranscriptionRequestInsertId = await insertVideoTranscriptRequestInDb(transcriptionRequest);
+
+        try {
+          await transcriptAnalysisEntry(transcriptionRequest, videoTranscriptionRequestInsertId);
+        } catch (error) {
+          console.log('error requesting transcription', error);
+          // TODO - add cron to retry failed transcription requests
+        }
+
+        await msg.ack(); // Message will be acked if the message is stored in DB successfully
       } catch (error) {
         console.log('error processing message', error);
-        await msg.nack(true); // Requeue on failure
+        await msg.nack(true); // Requeue on failure // TODO - ADD backoff strategy to prevent infinite loops
         // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
       }
     });
 
     console.log('consumers started successfully');
   } catch (err) {
-    console.log(err);
+    console.log('error starting consumers', err);
   }
 };
 
@@ -40,13 +52,6 @@ export const connectToMessageBroker = async () => {
 
     // 3.1 declare exchanges
 
-    const logsExchange = await channel.exchangeDeclare('logs_exchange', 'topic', {
-      durable: true,
-      passive: false,
-      autoDelete: false,
-      internal: false,
-    });
-
     const analysisExchange = await channel.exchangeDeclare('analysis_exchange', 'topic', {
       durable: true,
       passive: false,
@@ -55,13 +60,6 @@ export const connectToMessageBroker = async () => {
     });
 
     // 3.2 declare queues
-
-    logsQueue = await channel.queue('logs_queue', {
-      durable: true,
-      passive: false,
-      autoDelete: false,
-      exclusive: false,
-    });
 
     transcriptionRequestedQueue = await channel.queue('transcription_requested_queue', {
       durable: true,
@@ -84,15 +82,9 @@ export const connectToMessageBroker = async () => {
     await transcriptionCompletedQueue.bind('analysis_exchange', 'analysis.analysisEntry.transcription.completed', {
     });
 
-    await logsQueue.bind('logs_exchange', 'logs.#', {
-      // no args
-    });
-
     // 4. Set up consumer/s
 
     await startConsumers();
-
-    // await publishDebuggingCallToTranscriptionRequestedQueue() //* uncomment to send an example message to transcriptionRequestedQueue
 
     console.log('transcription service successfully connected to LavinMQ message broker');
     return {
@@ -101,22 +93,11 @@ export const connectToMessageBroker = async () => {
   } catch (e) {
     console.error('ERROR', e);
     e.connection?.close();
-    setTimeout(connectToMessageBroker, 1000); // will try to reconnect in 1s
-  }
-};
-
-// function for publishing to logs queue
-export const publishLogs = async (message) => {
-  console.log('publishing to logsQueue message function called');
-  try {
-    await logsQueue.publish(message);
-  } catch (err) {
-    console.error('Error publishing logs message:', err);
+    return setTimeout(connectToMessageBroker, 1000); // will try to reconnect in 1s
   }
 };
 
 export const publishTranscriptionCompletedQueue = async (message) => {
-  console.log('publishing to transcriptionCompletedQueue message function called');
   try {
     await transcriptionCompletedQueue.publish(message);
   } catch (err) {
@@ -124,7 +105,7 @@ export const publishTranscriptionCompletedQueue = async (message) => {
   }
 };
 
-const publishDebuggingCallToTranscriptionRequestedQueue = async () => {
+export const publishDebuggingCallToTranscriptionRequestedQueue = async () => {
   const message = {
     analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
     analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',

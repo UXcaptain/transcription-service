@@ -13,7 +13,7 @@ export const connectToMongoDB = async () => {
 
       const transcriptionServiceDb = client.db('transcriptionServiceDB');
 
-      console.log('Connected successfully to mongodb');
+      console.log('Connected successfully to mongodb'); // TODO - check why this is being call everytime
 
       return transcriptionServiceDb;
     } catch (error) {
