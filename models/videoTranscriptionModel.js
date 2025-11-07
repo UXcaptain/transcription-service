@@ -48,3 +48,15 @@ export const getCompletedTranscriptions = async () => {
 
   return completedTranscriptions;
 };
+
+export const getTranscriptionJobDetailsFromDb = async (transcriptionJobDetails) => {
+  const db = await connectToMongoDB();
+
+  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+
+  const transcriptionJobDetailsResult = await videoTranscriptionsCollection.findOne(
+    { _id: transcriptionJobDetails.transcriptionJobName },
+  );
+
+  return transcriptionJobDetailsResult;
+};

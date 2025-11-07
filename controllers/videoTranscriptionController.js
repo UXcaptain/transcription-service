@@ -1,7 +1,7 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
 import { getS3Object } from '../integrations/AWS/S3.js';
 import { listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
-import { updateSingleVideoTranscriptRequestInDb, getTranscriptionJobsDetailsFromDb } from '../models/videoTranscriptionModel.js';
+import { updateSingleVideoTranscriptRequestInDb, getTranscriptionJobDetailsFromDb } from '../models/videoTranscriptionModel.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
@@ -16,7 +16,7 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
         // 1. Fetch JSON from AWS using transcription info (e.g., _id)
         // const jsonData = await fetchJsonFromAWS(transcription._id);
 
-        const transcriptionJobDetails = await getTranscriptionJobsDetailsFromDb(transcriptionJob.TranscriptionJobName);
+        const transcriptionJobDetails = await getTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
 
         const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails.analysisEntryId}/transcription.json`;
 
