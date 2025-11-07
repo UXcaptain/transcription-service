@@ -1,5 +1,6 @@
 import {
   TranscribeClient, StartTranscriptionJobCommand, ListTranscriptionJobsCommand,
+  DeleteTranscriptionJobCommand,
 } from '@aws-sdk/client-transcribe';
 
 const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
@@ -31,4 +32,16 @@ export const listCompletedTranscriptionJobsFromAWS = async () => {
   const completedTranscriptionJobsSummary = completedTranscriptionJobs.TranscriptionJobSummaries; // returns an array
 
   return completedTranscriptionJobsSummary;
+};
+
+export const deleteCompletedTranscriptionJobsFromAWS = async (transcriptionJobName) => {
+  const command = new DeleteTranscriptionJobCommand({
+    TranscriptionJobName: transcriptionJobName,
+
+  });
+
+  const deletedTranscriptionJobs = await transcribeClient.send(command);
+  // returns an array
+
+  return deletedTranscriptionJobs;
 };
