@@ -15,6 +15,14 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
       try {
         // 1. Fetch JSON from AWS using transcription info (e.g., _id)
         // const jsonData = await fetchJsonFromAWS(transcription._id);
+
+        const transcriptionJobDetails = await getTranscriptionJobsDetailsFromDb(transcriptionJob.TranscriptionJobName);
+
+        const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails.analysisEntryId}/transcription.json`;
+
+        const jsonTranscription = await getS3Object(key);
+
+        console.log(jsonTranscription);
       } catch (error) {
         console.error(`Error processing transcription ${transcriptionJob._id}:`, error);
         // Continue to next item
