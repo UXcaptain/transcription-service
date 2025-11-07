@@ -18,6 +18,10 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
 
         const transcriptionJobDetails = await getTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
 
+        if (!transcriptionJobDetails) {
+          throw Error('job details dont exist in DB');
+        }
+
         const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails.analysisEntryId}/transcription.json`;
 
         const transcriptionFile = await getS3Object(key);

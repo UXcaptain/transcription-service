@@ -55,7 +55,7 @@ export const getTranscriptionJobDetailsFromDb = async (transcriptionJobDetails) 
   const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
 
   const transcriptionJobDetailsResult = await videoTranscriptionsCollection.findOne(
-    { _id: transcriptionJobDetails.transcriptionJobName },
+    { _id: transcriptionJobDetails },
   );
 
   return transcriptionJobDetailsResult;
