@@ -1,5 +1,5 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
-import { listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/transcriptionJob.js';
+import { getS3Object } from '../integrations/AWS/S3.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
