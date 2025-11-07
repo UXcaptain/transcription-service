@@ -3,12 +3,10 @@ import { createServer } from 'http';
 import { globalErrorHandler } from './middleware/globalErrorHandler.js';
 import { connectToMessageBroker, publishDebuggingCallToTranscriptionRequestedQueue } from './config/messageBroker/LavinMQ.js';
 import { startCronJobs } from './cron/cronJobScheduler.js';
-import { connectToMongoDB } from './database/config.js';
 
 const app = express();
 const server = createServer(app);
 
-connectToMongoDB();
 connectToMessageBroker();
 startCronJobs();
 
