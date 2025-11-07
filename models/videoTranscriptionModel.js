@@ -9,7 +9,6 @@ export const insertVideoTranscriptRequestInDb = async (videoTranscriptionRequest
     _id: videoTranscriptionRequest.analysisEntryId,
     status: 'PENDING',
     analysisId: videoTranscriptionRequest.analysisId,
-    analysisEntryId: videoTranscriptionRequest.analysisEntryId,
     createdAt: new Date(),
   });
 
