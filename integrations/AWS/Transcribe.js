@@ -23,8 +23,7 @@ export const requestAnalysisEntryTranscription = async (transcriptionRequest, in
 export const listCompletedTranscriptionJobsFromAWS = async () => {
   const command = new ListTranscriptionJobsCommand({
     Status: 'COMPLETED',
-    // MaxResults: 100,
-    MaxResults: 3, //* debug
+    MaxResults: 100,
 
   });
 
