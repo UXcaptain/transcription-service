@@ -1,5 +1,6 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
 import { getS3Object } from '../integrations/AWS/S3.js';
+import { listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
@@ -7,6 +8,19 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
     const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
 
     // Iterate over every item
+    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
+      const transcriptionJob = completedTranscriptionJobsSummary[i];
+
+
+      try {
+        // 1. Fetch JSON from AWS using transcription info (e.g., _id)
+        // const jsonData = await fetchJsonFromAWS(transcription._id);
+      } catch (error) {
+        console.error(`Error processing transcription ${transcriptionJob._id}:`, error);
+        // Continue to next item
+      }
+    }
+
     const message = {
     //   analysisEntryId: analysisEntryId,
       jsonTranscription: {},
