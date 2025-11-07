@@ -1,7 +1,9 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
 import { getS3Object } from '../integrations/AWS/S3.js';
 import { listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
-import { updateSingleVideoTranscriptRequestInDb, getTranscriptionJobDetailsFromDb } from '../models/videoTranscriptionModel.js';
+import {
+  updateSingleVideoTranscriptRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
+} from '../models/videoTranscriptionModel.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
@@ -9,48 +11,52 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
     const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
 
     // Iterate over every item
-    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
+    for (let i = 0; i < completedTranscriptionJobsSummary.length; i++) {
       const transcriptionJob = completedTranscriptionJobsSummary[i];
 
       try {
-        // 1. Fetch JSON from AWS using transcription info (e.g., _id)
-        // const jsonData = await fetchJsonFromAWS(transcription._id);
-
-        const transcriptionJobDetails = await getTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
+        // 1. Get transcription job details from database
+        const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
 
         if (!transcriptionJobDetails) {
-          throw Error('job details dont exist in DB');
+          throw Error(`job ${transcriptionJob.TranscriptionJobName} details dont exist in DB`);
         }
 
-        const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails.analysisEntryId}/transcription.json`;
+        // Skip if already processed - Shouldnt happen too often if AWS Transcribe job deletion CRON is working properly
+        if (transcriptionJobDetails.publishedToQueue) {
+          console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
+          return;
+        }
 
-        const transcriptionFile = await getS3Object(key);
+        // 2. Construct S3 key and fetch transcription file from AWS
+        const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails._id}/transcription.json`;
 
-        const jsonTranscription = await transcriptionFile.json();
+        const transcriptionJobDataStructure = await getS3Object(key);
 
-        console.log(jsonTranscription);
-        // 2. Parse the JSON
-        // const parsedData = JSON.parse(jsonTrasncription);
+        // 3. Parse the transcription data structure
+        const parsedTranscriptionJobDataStructure = JSON.parse(transcriptionJobDataStructure);
 
-        // 3. Store parsed data in DB and update status value
-        // await storeInDB(parsedData);
+        // 4. Store parsed data in DB and update status to COMPLETED
+        await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, parsedTranscriptionJobDataStructure);
 
-        // 4. Send parsed data to event queue
-        // await sendToEventQueue(parsedData);
+        // 5. Send parsed data to event queue
+        const message = {
+          analysisEntryId: transcriptionJobDetails._id,
+          transcriptionData: parsedTranscriptionJobDataStructure.results,
+        };
+
+        const stringifiedMessage = JSON.stringify(message);
+        publishToTranscriptionCompletedQueue(stringifiedMessage);
+
+        // 6. Mark as published to queue in database
+        await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
+
+        console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
       } catch (error) {
-        console.error(`Error processing transcription ${transcriptionJob._id}:`, error);
+        console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
         // Continue to next item
       }
     }
-
-    const message = {
-    //   analysisEntryId: analysisEntryId,
-      jsonTranscription: {},
-    };
-
-    const stringifiedMessage = JSON.stringify(message);
-
-    publishToTranscriptionCompletedQueue(stringifiedMessage);
   } catch (error) {
     console.log('error updating completed transcription jobs', error);
   }
@@ -61,21 +67,3 @@ export const transcriptAnalysisEntry = async (transcriptionRequest, videoTranscr
 
   await updateSingleVideoTranscriptRequestInDb(videoTranscriptionRequestInsertId);
 };
-
-/*
-
-what i need to do is fetch the transcriptions, parse them, store them in DB and send them to the queue -- the question is - Where should each part of the process happen?
-
-1- check completed transcriptionJobs --> as a cron job
-2- update the status of the completed jobs in DB --> 
-3- fetch the transcriptions & parse them & store them in DB -->
-4- send them to the queue
-
-6- cron job to delete already process jobs from AWS
-
-el controller es el que deberia 
-1- actualizar la BBDD
-2- guardar la transcripcion en la BBDD
-3- llamar a la cola
-
-*/

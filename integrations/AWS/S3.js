@@ -1,6 +1,5 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 
-
 export const s3client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: { // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-s3/modules/credentials.html
@@ -15,7 +14,10 @@ export const getS3Object = async (key) => {
     Key: key,
   });
 
-  const s3Object = s3client.send(command);
+  const s3Object = await s3client.send(command);
 
-  return s3Object;
+  // Read the response body as a stream and convert to string so it is workable
+  const responseBody = await s3Object.Body.transformToString();
+
+  return responseBody;
 };

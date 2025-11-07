@@ -60,7 +60,7 @@ export const getSingleTranscriptionJobDetailsFromDb = async (transcriptionJobDet
   return transcriptionJobDetailsResult;
 };
 
-export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, transcriptionData) => {
+export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, parsedTranscriptionJobDataStructure) => {
   const db = await connectToMongoDB();
 
   const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
@@ -69,10 +69,10 @@ export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, tra
     { _id: transcriptionJobInsertId },
     {
       $set: {
-        status: transcriptionData.status,
-        transcriptionData: transcriptionData,
+        status: parsedTranscriptionJobDataStructure.status,
+        transcriptionData: parsedTranscriptionJobDataStructure.results,
         updatedAt: new Date(),
-        sentToQueue: false,
+        publishedToQueue: false,
       },
     },
   );
@@ -80,7 +80,7 @@ export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, tra
   return updateResult;
 };
 
-export const markTranscriptionAsSentToQueue = async (transcriptionJobInsertId) => {
+export const markTranscriptionAsPublishedToQueue = async (transcriptionJobInsertId) => {
   const db = await connectToMongoDB();
 
   const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
@@ -89,7 +89,7 @@ export const markTranscriptionAsSentToQueue = async (transcriptionJobInsertId) =
     { _id: transcriptionJobInsertId },
     {
       $set: {
-        sentToQueue: true,
+        publishedToQueue: true,
         updatedAt: new Date(),
       },
     },
