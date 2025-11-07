@@ -1,9 +1,9 @@
 import { CronJob } from 'cron';
-import { updateCompletedVideoTranscriptionJobs } from '../controllers/videoTranscriptionController.js';
+import { handleCompletedVideoTranscriptionJobs } from '../controllers/videoTranscriptionController.js';
 
 export const getCompletedTranscriptionJobsScheduler = new CronJob('* * * * *', async () => {
   try {
-    updateCompletedVideoTranscriptionJobs();
+    await handleCompletedVideoTranscriptionJobs();
   } catch (error) {
     console.error('Error checking transcription job status:', error);
   }

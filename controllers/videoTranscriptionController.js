@@ -1,7 +1,7 @@
 import { getCompletedTranscriptionJobs, requestAnalysisEntryTranscription } from '../integrations/AWS/transcriptionJob.js';
 import { updateCompletedVideoTranscriptionJobsInDb, updateSingleVideoTranscriptRequestInDb } from '../models/videoTranscriptionModel.js';
 
-export const updateCompletedVideoTranscriptionJobs = async () => {
+export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
     const completedTranscriptionJobsSummary = await getCompletedTranscriptionJobs();
 
