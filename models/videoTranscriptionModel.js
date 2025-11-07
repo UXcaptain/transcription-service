@@ -1,33 +1,4 @@
-import { ObjectId } from 'mongodb';
 import { connectToMongoDB } from '../database/config.js';
-
-export const updateCompletedVideoTranscriptionJobsInDb = async (videoTranscriptionjobIds) => {
-  const db = await connectToMongoDB();
-
-  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
-
-  const bulkOps = videoTranscriptionjobIds.map((item) => ({
-    updateOne: {
-      filter: { _id: ObjectId.createFromHexString(item.TranscriptionJobName), status: 'IN_PROGRESS' },
-      update: {
-        $set: {
-          CompletionTime: item.CompletionTime,
-          updatedAt: new Date(),
-          status: item.TranscriptionJobStatus,
-          sentToQueue: false,
-        },
-      },
-      upsert: false,
-    },
-  }));
-
-  try {
-    const result = await videoTranscriptionsCollection.bulkWrite(bulkOps);
-    return result;
-  } catch (err) {
-    return console.error('Bulk update error:', err);
-  }
-};
 
 export const insertVideoTranscriptRequestInDb = async (videoTranscriptionRequest) => {
   const db = await connectToMongoDB();
