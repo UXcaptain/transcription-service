@@ -35,13 +35,14 @@ export const insertVideoTranscriptRequestInDb = async (videoTranscriptionRequest
   const videoTranscriptionRequests = db.collection('videoTranscriptionRequests');
 
   const insertionResult = await videoTranscriptionRequests.insertOne({
+    _id: videoTranscriptionRequest.analysisEntryId,
     status: 'PENDING',
     analysisId: videoTranscriptionRequest.analysisId,
     analysisEntryId: videoTranscriptionRequest.analysisEntryId,
     createdAt: new Date(),
   });
 
-  const objectId = insertionResult.insertedId.toString();
+  const objectId = insertionResult.insertedId;
 
   return objectId;
 };
@@ -52,7 +53,7 @@ export const updateSingleVideoTranscriptRequestInDb = async (videoTranscriptionR
   const videoTranscriptionRequests = db.collection('videoTranscriptionRequests');
 
   const updateResult = await videoTranscriptionRequests.updateOne(
-    { _id: ObjectId.createFromHexString(videoTranscriptionRequestInsertId) },
+    { _id: videoTranscriptionRequestInsertId },
     {
       $set: {
         status: 'IN_PROGRESS',
@@ -61,7 +62,7 @@ export const updateSingleVideoTranscriptRequestInDb = async (videoTranscriptionR
     },
   );
 
-  return updateResult; // TODO -- CHECK IF THIS WORKS
+  return updateResult;
 };
 
 export const getCompletedTranscriptions = async () => {
