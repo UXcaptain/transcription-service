@@ -1,6 +1,6 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
 import { getS3Object } from '../integrations/AWS/S3.js';
-import { listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
+import { deleteCompletedTranscriptionJobsFromAWS, listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
 import {
   updateSingleVideoTranscriptRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
 } from '../models/videoTranscriptionModel.js';
@@ -38,6 +38,12 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
 
         // 4. Store parsed data in DB and update status to COMPLETED
         await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, parsedTranscriptionJobDataStructure);
+
+        try {
+          await deleteCompletedTranscriptionJobsFromAWS(transcriptionJob.TranscriptionJobName);
+        } catch (error) {
+          console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
+        }
 
         // 5. Send parsed data to event queue
         const message = {
