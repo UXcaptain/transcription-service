@@ -1,0 +1,38 @@
+{
+   "NextToken": "string",
+   "Status": "string",
+   "TranscriptionJobSummaries": [ 
+      { 
+         "CompletionTime": number,
+         "ContentRedaction": { 
+            "PiiEntityTypes": [ "string" ],
+            "RedactionOutput": "string",
+            "RedactionType": "string"
+         },
+         "CreationTime": number,
+         "FailureReason": "string",
+         "IdentifiedLanguageScore": number,
+         "IdentifyLanguage": boolean,
+         "IdentifyMultipleLanguages": boolean,
+         "LanguageCode": "string",
+         "LanguageCodes": [ 
+            { 
+               "DurationInSeconds": number,
+               "LanguageCode": "string"
+            }
+         ],
+         "ModelSettings": { 
+            "LanguageModelName": "string"
+         },
+         "OutputLocationType": "string",
+         "StartTime": number,
+         "ToxicityDetection": [ 
+            { 
+               "ToxicityCategories": [ "string" ]
+            }
+         ],
+         "TranscriptionJobName": "string",
+         "TranscriptionJobStatus": "string"
+      }
+   ]
+}

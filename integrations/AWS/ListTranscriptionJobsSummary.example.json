@@ -1,0 +1,39 @@
+[
+  {
+    CompletionTime: 2025-11-06T22:22:18.341Z,
+    CreationTime: 2025-11-06T22:22:10.422Z,
+    LanguageCode: 'es-ES',
+    OutputLocationType: 'CUSTOMER_BUCKET',
+    StartTime: 2025-11-06T22:22:10.440Z,
+    TranscriptionJobName: '690d1f92f9f2c50f91f2bce1',
+    TranscriptionJobStatus: 'COMPLETED'
+  },
+  {
+    CompletionTime: 2025-11-06T22:01:34.943Z,
+    CreationTime: 2025-11-06T22:01:27.679Z,
+    LanguageCode: 'es-ES',
+    OutputLocationType: 'CUSTOMER_BUCKET',
+    StartTime: 2025-11-06T22:01:27.703Z,
+    TranscriptionJobName: '690d1ab748ff1236b94ddf5c',
+    TranscriptionJobStatus: 'COMPLETED'
+  },
+  {
+    CompletionTime: 2025-11-06T15:11:56.146Z,
+    CreationTime: 2025-11-06T15:11:48.587Z,
+    LanguageCode: 'es-ES',
+    OutputLocationType: 'CUSTOMER_BUCKET',
+    StartTime: 2025-11-06T15:11:48.611Z,
+    TranscriptionJobName: '690cbab4f1434a99c7ffcd6e',
+    TranscriptionJobStatus: 'COMPLETED'
+  },
+  {
+    CompletionTime: 2025-11-05T16:47:48.327Z,
+    CreationTime: 2025-11-05T16:47:40.430Z,
+    LanguageCode: 'es-ES',
+    OutputLocationType: 'CUSTOMER_BUCKET',
+    StartTime: 2025-11-05T16:47:40.460Z,
+    TranscriptionJobName: 'analysisEntryTranscription-4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
+    TranscriptionJobStatus: 'COMPLETED'
+  }
+  
+]
