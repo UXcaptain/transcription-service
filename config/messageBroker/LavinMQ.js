@@ -93,19 +93,11 @@ export const publishToTranscriptionCompletedQueue = async (message) => {
   }
 };
 
-export const publishDebuggingCallToTranscriptionRequestedQueue = async () => {
-  const message = {
-    analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
-    analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',
-    timestamp: new Date().toISOString(),
-    mediaType: 'video',
-    languageCode: 'es-ES',
-    outputBucket: 'dev-analysis-entry-storage',
-  };
-
-  const stringifiedMessage = JSON.stringify(message);
-
-  setTimeout(() => {
-    transcriptionRequestedQueue.publish(stringifiedMessage);
-  }, 5000);
+const debugTranscriptionRequestedMessage = { //* send this message on the LavinMQ GUI to test the queue
+  analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
+  analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',
+  timestamp: new Date().toISOString(),
+  mediaType: 'video',
+  languageCode: 'es-ES',
+  outputBucket: 'dev-analysis-entry-storage',
 };
