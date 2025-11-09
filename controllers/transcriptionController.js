@@ -4,6 +4,7 @@ import { deleteCompletedTranscriptionJobsFromAWS, listCompletedTranscriptionJobs
 import {
   updateSingleTranscriptionRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
 } from '../models/transcriptionModel.js';
+import { normalizeTranscript } from '../utils/transcriptionJobDataNormalizer.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
@@ -11,7 +12,7 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
     const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
 
     // Iterate over every item
-    for (let i = 0; i < completedTranscriptionJobsSummary.length; i++) {
+    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
       const transcriptionJob = completedTranscriptionJobsSummary[i];
 
       try {
@@ -36,8 +37,10 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
         // 3. Parse the transcription data structure
         const parsedTranscriptionJobDataStructure = JSON.parse(transcriptionJobDataStructure);
 
+        const normalizedTranscriptionJobDataStructure = await normalizeTranscript(transcriptionJobDataStructure);
+
         // 4. Store parsed data in DB and update status to COMPLETED
-        await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, parsedTranscriptionJobDataStructure);
+        await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJobDataStructure);
 
         try {
           await deleteCompletedTranscriptionJobsFromAWS(transcriptionJob.TranscriptionJobName);
