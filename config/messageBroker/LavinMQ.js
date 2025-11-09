@@ -99,5 +99,4 @@ const debugTranscriptionRequestedMessage = { //* send this message on the LavinM
   timestamp: new Date().toISOString(),
   mediaType: 'video',
   languageCode: 'es-ES',
-  outputBucket: 'dev-analysis-entry-storage',
 };

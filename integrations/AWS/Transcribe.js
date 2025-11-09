@@ -10,9 +10,9 @@ export const requestAnalysisEntryTranscription = async (transcriptionRequest, in
     TranscriptionJobName: insertId,
     LanguageCode: transcriptionRequest.languageCode,
     Media: {
-      MediaFileUri: `s3://${transcriptionRequest.outputBucket}/analysis/${transcriptionRequest.analysisId}/${transcriptionRequest.analysisEntryId}/recording.mp4`,
+      MediaFileUri: `s3://${process.env.AWS_BUCKET}/analysis/${transcriptionRequest.analysisId}/${transcriptionRequest.analysisEntryId}/recording.mp4`,
     },
-    OutputBucketName: transcriptionRequest.outputBucket,
+    OutputBucketName: process.env.AWS_BUCKET,
     OutputKey: `analysis/${transcriptionRequest.analysisId}/${transcriptionRequest.analysisEntryId}/transcription.json`,
   });
 
