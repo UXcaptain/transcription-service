@@ -1,5 +1,5 @@
 import { CronJob } from 'cron';
-import { handleCompletedVideoTranscriptionJobs } from '../controllers/videoTranscriptionController.js';
+import { handleCompletedVideoTranscriptionJobs } from '../controllers/transcriptionController.js';
 
 export const getCompletedTranscriptionJobsScheduler = new CronJob('* * * * *', async () => {
   try {

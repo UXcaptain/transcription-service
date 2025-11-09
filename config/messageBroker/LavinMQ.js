@@ -1,6 +1,6 @@
 import { AMQPClient } from '@cloudamqp/amqp-client';
-import { insertVideoTranscriptRequestInDb } from '../../models/videoTranscriptionModel.js';
-import { transcriptAnalysisEntry } from '../../controllers/videoTranscriptionController.js';
+import { insertTranscriptionRequestInDb } from '../../models/transcriptionModel.js';
+import { transcriptAnalysisEntry } from '../../controllers/transcriptionController.js';
 
 let connection;
 let channel;
@@ -57,10 +57,10 @@ export const connectToMessageBroker = async () => {
         const contentStr = msg.bodyToString();
         const transcriptionRequest = JSON.parse(contentStr);
 
-        const videoTranscriptionRequestInsertId = await insertVideoTranscriptRequestInDb(transcriptionRequest);
+        const transcriptionRequestInsertId = await insertTranscriptionRequestInDb(transcriptionRequest);
 
         try {
-          await transcriptAnalysisEntry(transcriptionRequest, videoTranscriptionRequestInsertId);
+          await transcriptAnalysisEntry(transcriptionRequest, transcriptionRequestInsertId);
         } catch (error) {
           console.log('error requesting transcription', error);
           // TODO - add cron to retry failed transcription requests
@@ -93,6 +93,7 @@ export const publishToTranscriptionCompletedQueue = async (message) => {
   }
 };
 
+/*
 const debugTranscriptionRequestedMessage = { //* send this message on the LavinMQ GUI to test the queue
   analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
   analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',
@@ -100,3 +101,4 @@ const debugTranscriptionRequestedMessage = { //* send this message on the LavinM
   mediaType: 'video',
   languageCode: 'es-ES',
 };
+*/

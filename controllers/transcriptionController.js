@@ -2,8 +2,8 @@ import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/La
 import { getS3Object } from '../integrations/AWS/S3.js';
 import { deleteCompletedTranscriptionJobsFromAWS, listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
 import {
-  updateSingleVideoTranscriptRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
-} from '../models/videoTranscriptionModel.js';
+  updateSingleTranscriptionRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
+} from '../models/transcriptionModel.js';
 
 export const handleCompletedVideoTranscriptionJobs = async () => {
   try {
@@ -68,8 +68,8 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
   }
 };
 
-export const transcriptAnalysisEntry = async (transcriptionRequest, videoTranscriptionRequestInsertId) => {
-  await requestAnalysisEntryTranscription(transcriptionRequest, videoTranscriptionRequestInsertId);
+export const transcriptAnalysisEntry = async (transcriptionRequest, transcriptionRequestInsertId) => {
+  await requestAnalysisEntryTranscription(transcriptionRequest, transcriptionRequestInsertId);
 
-  await updateSingleVideoTranscriptRequestInDb(videoTranscriptionRequestInsertId);
+  await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
 };

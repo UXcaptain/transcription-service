@@ -1,15 +1,16 @@
 import { connectToMongoDB } from '../database/config.js';
 
-export const insertVideoTranscriptRequestInDb = async (videoTranscriptionRequest) => {
+export const insertTranscriptionRequestInDb = async (transcriptionRequest) => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionRequests = db.collection('videoTranscriptionRequests');
+  const transcriptionRequests = db.collection('transcriptionRequests');
 
-  const insertionResult = await videoTranscriptionRequests.insertOne({
-    _id: videoTranscriptionRequest.analysisEntryId,
+  const insertionResult = await transcriptionRequests.insertOne({
+    _id: transcriptionRequest.analysisEntryId,
     status: 'PENDING',
-    analysisId: videoTranscriptionRequest.analysisId,
+    analysisId: transcriptionRequest.analysisId,
     createdAt: new Date(),
+    type: transcriptionRequest.mediaType,
   });
 
   const objectId = insertionResult.insertedId;
@@ -17,13 +18,13 @@ export const insertVideoTranscriptRequestInDb = async (videoTranscriptionRequest
   return objectId;
 };
 
-export const updateSingleVideoTranscriptRequestInDb = async (videoTranscriptionRequestInsertId) => {
+export const updateSingleTranscriptionRequestInDb = async (transcriptionRequestInsertId) => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionRequests = db.collection('videoTranscriptionRequests');
+  const transcriptionRequests = db.collection('transcriptionRequests');
 
-  const updateResult = await videoTranscriptionRequests.updateOne(
-    { _id: videoTranscriptionRequestInsertId },
+  const updateResult = await transcriptionRequests.updateOne(
+    { _id: transcriptionRequestInsertId },
     {
       $set: {
         status: 'IN_PROGRESS',
@@ -38,9 +39,9 @@ export const updateSingleVideoTranscriptRequestInDb = async (videoTranscriptionR
 export const getCompletedTranscriptions = async () => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+  const transcriptionsCollection = db.collection('transcriptionRequests');
 
-  const completedTranscriptions = await videoTranscriptionsCollection.find({
+  const completedTranscriptions = await transcriptionsCollection.find({
     sentToQueue: false,
     status: 'COMPLETED',
   }).toArray();
@@ -51,9 +52,9 @@ export const getCompletedTranscriptions = async () => {
 export const getSingleTranscriptionJobDetailsFromDb = async (transcriptionJobDetails) => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+  const transcriptionsCollection = db.collection('transcriptionRequests');
 
-  const transcriptionJobDetailsResult = await videoTranscriptionsCollection.findOne(
+  const transcriptionJobDetailsResult = await transcriptionsCollection.findOne(
     { _id: transcriptionJobDetails },
   );
 
@@ -63,9 +64,9 @@ export const getSingleTranscriptionJobDetailsFromDb = async (transcriptionJobDet
 export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, parsedTranscriptionJobDataStructure) => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+  const transcriptionsCollection = db.collection('transcriptionRequests');
 
-  const updateResult = await videoTranscriptionsCollection.updateOne(
+  const updateResult = await transcriptionsCollection.updateOne(
     { _id: transcriptionJobInsertId },
     {
       $set: {
@@ -83,9 +84,9 @@ export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, par
 export const markTranscriptionAsPublishedToQueue = async (transcriptionJobInsertId) => {
   const db = await connectToMongoDB();
 
-  const videoTranscriptionsCollection = db.collection('videoTranscriptionRequests');
+  const transcriptionsCollection = db.collection('transcriptionRequests');
 
-  const updateResult = await videoTranscriptionsCollection.updateOne(
+  const updateResult = await transcriptionsCollection.updateOne(
     { _id: transcriptionJobInsertId },
     {
       $set: {
