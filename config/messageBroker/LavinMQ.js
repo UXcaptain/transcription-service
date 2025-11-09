@@ -4,39 +4,7 @@ import { transcriptAnalysisEntry } from '../../controllers/videoTranscriptionCon
 
 let connection;
 let channel;
-let transcriptionRequestedQueue;
 let transcriptionCompletedQueue;
-
-const startConsumers = async () => {
-  try {
-    // TranscriptionRequestedConsumer
-    await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
-      try {
-        const contentStr = msg.bodyToString();
-        const transcriptionRequest = JSON.parse(contentStr);
-
-        const videoTranscriptionRequestInsertId = await insertVideoTranscriptRequestInDb(transcriptionRequest);
-
-        try {
-          await transcriptAnalysisEntry(transcriptionRequest, videoTranscriptionRequestInsertId);
-        } catch (error) {
-          console.log('error requesting transcription', error);
-          // TODO - add cron to retry failed transcription requests
-        }
-
-        await msg.ack(); // Message will be acked if the message is stored in DB successfully
-      } catch (error) {
-        console.log('error processing message', error);
-        await msg.nack(true); // Requeue on failure // TODO - ADD backoff strategy to prevent infinite loops
-        // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
-      }
-    });
-
-    console.log('consumers started successfully');
-  } catch (err) {
-    console.log('error starting consumers', err);
-  }
-};
 
 // Main AMQP setup function
 export const connectToMessageBroker = async () => {
@@ -61,7 +29,7 @@ export const connectToMessageBroker = async () => {
 
     // 3.2 declare queues
 
-    transcriptionRequestedQueue = await channel.queue('transcription_requested_queue', {
+    const transcriptionRequestedQueue = await channel.queue('transcription_requested_queue', {
       durable: true,
       passive: false,
       autoDelete: false,
@@ -84,7 +52,27 @@ export const connectToMessageBroker = async () => {
 
     // 4. Set up consumer/s
 
-    await startConsumers();
+    await transcriptionRequestedQueue.subscribe({ noAck: false }, async (msg) => {
+      try {
+        const contentStr = msg.bodyToString();
+        const transcriptionRequest = JSON.parse(contentStr);
+
+        const videoTranscriptionRequestInsertId = await insertVideoTranscriptRequestInDb(transcriptionRequest);
+
+        try {
+          await transcriptAnalysisEntry(transcriptionRequest, videoTranscriptionRequestInsertId);
+        } catch (error) {
+          console.log('error requesting transcription', error);
+          // TODO - add cron to retry failed transcription requests
+        }
+
+        await msg.ack(); // Message will be acked if the message is stored in DB successfully
+      } catch (error) {
+        console.log('error processing message', error);
+        await msg.nack(true); // Requeue on failure // TODO - ADD backoff strategy to prevent infinite loops
+        // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
+      }
+    });
 
     console.log('transcription service successfully connected to LavinMQ message broker');
     return {
