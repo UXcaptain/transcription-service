@@ -70,7 +70,7 @@ export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, par
     { _id: transcriptionJobInsertId },
     {
       $set: {
-        status: parsedTranscriptionJobDataStructure.status,
+        status: 'COMPLETED',
         transcriptionData: parsedTranscriptionJobDataStructure.results,
         updatedAt: new Date(),
         publishedToQueue: false,
