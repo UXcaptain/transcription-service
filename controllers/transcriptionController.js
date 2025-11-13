@@ -11,59 +11,65 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
     // Get the completed Jobs from AWS Transcribe
     const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
 
+    console.log(completedTranscriptionJobsSummary);
+
+    if (completedTranscriptionJobsSummary.length === 0) {
+      console.log('no completed entries to process');
+    } else {
     // Iterate over every item
-    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
-      const transcriptionJob = completedTranscriptionJobsSummary[i];
-
-      try {
-        // 1. Get transcription job details from database
-        const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
-
-        if (!transcriptionJobDetails) {
-          throw Error(`job ${transcriptionJob.TranscriptionJobName} details dont exist in DB`);
-        }
-
-        // Skip if already processed - Shouldnt happen too often if AWS Transcribe job deletion CRON is working properly
-        if (transcriptionJobDetails.publishedToQueue) {
-          console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
-          return;
-        }
-
-        // 2. Construct S3 key and fetch transcription file from AWS
-        const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails._id}/transcription.json`;
-
-        const transcriptionJobDataStructure = await getS3Object(key);
-
-        // 3. Parse the transcription data structure
-        const parsedTranscriptionJobDataStructure = JSON.parse(transcriptionJobDataStructure);
-
-        const normalizedTranscriptionJobDataStructure = await normalizeTranscript(transcriptionJobDataStructure);
-
-        // 4. Store parsed data in DB and update status to COMPLETED
-        await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJobDataStructure);
+      for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
+        const transcriptionJob = completedTranscriptionJobsSummary[i];
 
         try {
-          await deleteCompletedTranscriptionJobsFromAWS(transcriptionJob.TranscriptionJobName);
+        // 1. Get transcription job details from database
+          const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
+
+          if (!transcriptionJobDetails) {
+            throw Error(`job ${transcriptionJob.TranscriptionJobName} details dont exist in DB`);
+          }
+
+          // Skip if already processed - Shouldnt happen too often if AWS Transcribe job deletion CRON is working properly
+          if (transcriptionJobDetails.publishedToQueue) {
+            console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
+            return;
+          }
+
+          // 2. Construct S3 key and fetch transcription file from AWS
+          const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails._id}/transcription.json`;
+
+          const transcriptionJobDataStructure = await getS3Object(key);
+
+          // 3. Parse the transcription data structure
+          const parsedTranscriptionJobDataStructure = JSON.parse(transcriptionJobDataStructure);
+
+          const normalizedTranscriptionJobDataStructure = await normalizeTranscript(transcriptionJobDataStructure);
+
+          // 4. Store parsed data in DB and update status to COMPLETED
+          await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJobDataStructure);
+
+          try {
+            await deleteCompletedTranscriptionJobsFromAWS(transcriptionJob.TranscriptionJobName);
+          } catch (error) {
+            console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
+          }
+
+          // 5. Send parsed data to event queue
+          const message = {
+            analysisEntryId: transcriptionJobDetails._id,
+            transcriptionData: parsedTranscriptionJobDataStructure.results,
+          };
+
+          const stringifiedMessage = JSON.stringify(message);
+          publishToTranscriptionCompletedQueue(stringifiedMessage);
+
+          // 6. Mark as published to queue in database
+          await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
+
+          console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
         } catch (error) {
-          console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
-        }
-
-        // 5. Send parsed data to event queue
-        const message = {
-          analysisEntryId: transcriptionJobDetails._id,
-          transcriptionData: parsedTranscriptionJobDataStructure.results,
-        };
-
-        const stringifiedMessage = JSON.stringify(message);
-        publishToTranscriptionCompletedQueue(stringifiedMessage);
-
-        // 6. Mark as published to queue in database
-        await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
-
-        console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
-      } catch (error) {
-        console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
+          console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
         // Continue to next item
+        }
       }
     }
   } catch (error) {
