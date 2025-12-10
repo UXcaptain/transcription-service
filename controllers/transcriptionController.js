@@ -45,7 +45,7 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
           const normalizedTranscriptionJobDataStructure = await normalizeTranscript(transcriptionJobDataStructure);
 
           // 4. Store parsed data in DB and update status to COMPLETED
-          await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJobDataStructure);
+          await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
 
           try {
             await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
