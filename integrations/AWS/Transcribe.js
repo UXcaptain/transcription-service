@@ -5,7 +5,7 @@ import {
 
 const transcribeClient = new TranscribeClient({ region: process.env.AWS_REGION });
 
-export const requestAnalysisEntryTranscription = async (transcriptionRequest, insertId) => {
+export const requestAnalysisEntryTranscriptionToAWSTranscribe = async (transcriptionRequest, insertId) => {
   const command = new StartTranscriptionJobCommand({
     TranscriptionJobName: insertId,
     LanguageCode: transcriptionRequest.languageCode,

@@ -1,6 +1,6 @@
 import { AMQPClient } from '@cloudamqp/amqp-client';
 import { insertTranscriptionRequestInDb } from '../../models/transcriptionModel.js';
-import { transcriptAnalysisEntry } from '../../controllers/transcriptionController.js';
+import { requestAnalysisEntryTranscription } from '../../controllers/transcriptionController.js';
 
 let connection;
 let channel;
@@ -60,7 +60,7 @@ export const connectToMessageBroker = async () => {
         const transcriptionRequestInsertId = await insertTranscriptionRequestInDb(transcriptionRequest);
 
         try {
-          await transcriptAnalysisEntry(transcriptionRequest, transcriptionRequestInsertId);
+          await requestAnalysisEntryTranscription(transcriptionRequest, transcriptionRequestInsertId);
         } catch (error) {
           console.log('error requesting transcription', error);
           // TODO - add cron to retry failed transcription requests
@@ -70,7 +70,7 @@ export const connectToMessageBroker = async () => {
       } catch (error) {
         console.log('error processing message', error);
         await msg.nack(true); // Requeue on failure // TODO - ADD backoff strategy to prevent infinite loops
-        // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
+        // await msg.nack(false); //* NOT Requeue on failure - For debugging and avoiding infite loops
       }
     });
 

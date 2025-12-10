@@ -77,8 +77,8 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
   }
 };
 
-export const transcriptAnalysisEntry = async (transcriptionRequest, transcriptionRequestInsertId) => {
-  await requestAnalysisEntryTranscription(transcriptionRequest, transcriptionRequestInsertId);
+export const requestAnalysisEntryTranscription = async (transcriptionRequest, transcriptionRequestInsertId) => {
+  await requestAnalysisEntryTranscriptionToAWSTranscribe(transcriptionRequest, transcriptionRequestInsertId);
 
   await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
 };
