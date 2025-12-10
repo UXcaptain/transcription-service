@@ -116,41 +116,6 @@ const createSegmentsFromAudioSegments = (transcriptData) => {
 };
 
 /**
- * Generates a WebVTT string from segments
- * @param {Array} segments - Array of segments
- * @returns {string} WebVTT formatted string
- */
-const generateWebVTT = (segments) => {
-  let vtt = 'WEBVTT\n\n';
-
-  // Using traditional for loop instead of for...of to comply with ESLint rules
-  for (let i = 0; i < segments.length; i += 1) {
-    const segment = segments[i];
-
-    // Convert comma back to dot for calculations
-    const startTime = segment.start.replace(',', '.');
-    const endTime = segment.end.replace(',', '.');
-
-    // Format times for WebVTT (HH:MM:SS.mmm)
-    const formatTime = (timeStr) => {
-      const totalSeconds = parseFloat(timeStr);
-      if (Number.isNaN(totalSeconds)) return '00:00:00.000';
-
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toFixed(3).padStart(6, '0')}`;
-    };
-
-    vtt += `${formatTime(startTime)} --> ${formatTime(endTime)}\n`;
-    vtt += `${segment.text}\n\n`;
-  }
-
-  return vtt;
-};
-
-/**
  * Calculates the duration from items
  * @param {Array} items - Array of transcription items
  * @returns {string} Duration formatted with comma as decimal separator
@@ -202,7 +167,6 @@ export const normalizeTranscript = async (transcript) => {
       return {
         duration: '0,0',
         segments: [],
-        vtt: 'WEBVTT\n\n',
       };
     }
 
@@ -215,21 +179,16 @@ export const normalizeTranscript = async (transcript) => {
     // Calculate duration
     const duration = calculateDuration(transcriptionData.items || []);
 
-    // Generate WebVTT
-    const vtt = generateWebVTT(segments);
-
     // Return normalized structure matching the required format
     return {
       duration,
       segments,
-      vtt,
     };
   } catch (error) {
     console.error('Error normalizing transcript:', error);
     return {
       duration: '0,0',
       segments: [],
-      vtt: 'WEBVTT\n\n',
     };
   }
 };
