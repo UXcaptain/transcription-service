@@ -85,9 +85,16 @@ export const connectToMessageBroker = async () => {
   }
 };
 
-export const publishToTranscriptionCompletedQueue = async (message) => {
+export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionJobSegments) => {
+  const message = {
+    analysisEntryId: transcriptionJobId,
+    transcriptionData: transcriptionJobSegments,
+  };
+
+  const stringifiedMessage = JSON.stringify(message);
+
   try {
-    await transcriptionCompletedQueue.publish(message);
+    await transcriptionCompletedQueue.publish(stringifiedMessage);
   } catch (err) {
     console.error('Error publishing transcription completed message:', err);
   }

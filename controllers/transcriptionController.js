@@ -54,19 +54,14 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
             console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
           }
 
-          // 5. Send parsed data to event queue
-          const message = {
-            analysisEntryId: transcriptionJobDetails._id,
-            transcriptionData: parsedTranscriptionJobDataStructure.results,
-          };
+          // 5. Send normalized transcript to event queue
 
-          const stringifiedMessage = JSON.stringify(message);
-          publishToTranscriptionCompletedQueue(stringifiedMessage);
+          await publishToTranscriptionCompletedQueue(transcriptionJobDetails._id, normalizedTranscriptionJob.results.segments);
 
           // 6. Mark as published to queue in database
           await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
 
-          console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
+          return console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
         } catch (error) {
           console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
         // Continue to next item
