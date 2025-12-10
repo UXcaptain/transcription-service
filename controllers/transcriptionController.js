@@ -48,7 +48,7 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
           await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJobDataStructure);
 
           try {
-            await deleteCompletedTranscriptionJobsFromAWS(transcriptionJob.TranscriptionJobName);
+            await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
           } catch (error) {
             console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
           }

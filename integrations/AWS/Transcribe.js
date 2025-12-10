@@ -34,10 +34,9 @@ export const listCompletedTranscriptionJobsFromAWS = async () => {
   return completedTranscriptionJobsSummary;
 };
 
-export const deleteCompletedTranscriptionJobsFromAWS = async (transcriptionJobName) => {
+export const deleteCompletedTranscriptionJobFromAWS = async (transcriptionJobName) => {
   const command = new DeleteTranscriptionJobCommand({
     TranscriptionJobName: transcriptionJobName,
-
   });
 
   const deletedTranscriptionJobs = await transcribeClient.send(command);
