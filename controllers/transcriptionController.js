@@ -1,7 +1,7 @@
 import { publishToTranscriptionCompletedQueue } from '../config/messageBroker/LavinMQ.js';
-import { getS3Object } from '../integrations/AWS/S3.js';
 import {
   deleteCompletedTranscriptionJobFromAWS,
+  fetchSingleTranscriptionJob,
   listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscriptionToAWSTranscribe,
 } from '../integrations/AWS/Transcribe.js';
 import {
@@ -48,11 +48,8 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
             ? what im trying to do here is to see if i should process the transcription job or not? maybe it makes sense to reconcile via cron jobs or directly check for both completion and queue publishing conditions?
           */
 
-          // 2. Construct S3 key and fetch transcription file from AWS
-          // const key = `analysis/${transcriptionJobDetails.analysisId}/${transcriptionJobDetails._id}/transcription.json`;
-          const key = 'analysis/464d4419-3822-41e6-8d8e-27b1783632df/eabd3179-ece0-4163-8c7e-0e2c728e11e6/transcription.json'; //* Debug - Point to the same transcription always
-
-          const transcriptionJobResult = await getS3Object(key);
+    // 2. Construct S3 key and fetch transcription file from AWS
+    const transcriptionJobResult = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
 
           // 3. Normalize transcription job result
 
