@@ -71,8 +71,7 @@ export const storeNormalizedTranscriptionInDb = async (transcriptionJobInsertId,
     {
       $set: {
         status: 'COMPLETED',
-        transcriptionData: parsedTranscriptionJobDataStructure.results,
-        transcriptionData: normalizedTranscriptionJob,
+        transcriptionData: normalizedTranscriptionJob.results.segments,
         updatedAt: new Date(),
         publishedToQueue: false,
       },
@@ -91,7 +90,7 @@ export const markTranscriptionAsPublishedToQueue = async (transcriptionJobInsert
     { _id: transcriptionJobInsertId },
     {
       $set: {
-        publishedToQueue: true,
+        publishedToQueue: false,
         updatedAt: new Date(),
       },
     },
