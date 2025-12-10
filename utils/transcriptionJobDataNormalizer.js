@@ -24,8 +24,8 @@ const createSegmentsFromItems = (items) => {
 
   const segments = [];
   let currentSegment = null;
-  const SEGMENT_GAP_THRESHOLD = 10.0; // seconds - significant gap to start new segment
-  const SEGMENT_MAX_DURATION = 45.0; // seconds - maximum duration to avoid overly long segments
+  const SEGMENT_GAP_THRESHOLD = 2.0; // seconds - gap for natural pauses to start new segment
+  const SEGMENT_MAX_DURATION = 25.0; // seconds - maximum duration to avoid overly long segments
 
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i];
