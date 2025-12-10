@@ -13,7 +13,7 @@ const convertToNumber = (value) => {
 };
 
 /**
- * Groups transcription items into logical segments
+ * Groups transcription items into meaningful segments with reduced cluttering
  * @param {Array} items - Array of transcription items from AWS Transcribe
  * @returns {Array} Array of segments with start_time, end_time, and transcript
  */
@@ -24,7 +24,8 @@ const createSegmentsFromItems = (items) => {
 
   const segments = [];
   let currentSegment = null;
-  const SEGMENT_GAP_THRESHOLD = 2.0; // seconds - gap between words to start new segment
+  const SEGMENT_GAP_THRESHOLD = 10.0; // seconds - significant gap to start new segment
+  const SEGMENT_MAX_DURATION = 45.0; // seconds - maximum duration to avoid overly long segments
 
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i];
@@ -54,11 +55,13 @@ const createSegmentsFromItems = (items) => {
             transcript: content,
           };
         } else {
-          // Check if we should start a new segment based on time gap
+          // Check if we should start a new segment based on time gap or max duration
           const timeGap = startTime - currentSegment.end_time;
+          const segmentDuration = startTime - currentSegment.start_time;
 
-          if (timeGap > SEGMENT_GAP_THRESHOLD) {
-            // Significant gap - finalize current segment and start new one
+          // Start new segment if there's a significant gap OR if we've reached max duration
+          if (timeGap > SEGMENT_GAP_THRESHOLD || segmentDuration >= SEGMENT_MAX_DURATION) {
+            // Significant gap or max duration reached - finalize current segment and start new one
             segments.push(currentSegment);
             currentSegment = {
               start_time: startTime,
@@ -107,7 +110,6 @@ export const normalizeTranscript = async (transcript) => {
       return {
         status: 'FAILED',
         results: {
-          transcripts: [],
           segments: [],
         },
       };
@@ -119,9 +121,6 @@ export const normalizeTranscript = async (transcript) => {
     // Extract results section
     const results = parsedTranscript.results || {};
 
-    // Extract transcripts array (pass through unchanged)
-    const transcripts = results.transcripts || [];
-
     // Extract items array and create segments
     const items = results.items || [];
     const segments = createSegmentsFromItems(items);
@@ -130,7 +129,6 @@ export const normalizeTranscript = async (transcript) => {
     return {
       status,
       results: {
-        transcripts,
         segments,
       },
     };
@@ -139,7 +137,6 @@ export const normalizeTranscript = async (transcript) => {
     return {
       status: 'FAILED',
       results: {
-        transcripts: [],
         segments: [],
       },
     };
