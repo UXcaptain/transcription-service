@@ -98,3 +98,16 @@ export const markTranscriptionAsPublishedToQueue = async (transcriptionJobInsert
 
   return updateResult;
 };
+
+export const getTranscriptionJobsInCompletedStatusNotPublishedToQueue = async () => {
+  const db = await connectToMongoDB();
+
+  const transcriptionsCollection = db.collection('transcriptionRequests');
+
+  const transcriptionJobs = await transcriptionsCollection.find({
+    status: 'COMPLETED',
+    publishedToQueue: false,
+  }).toArray();
+
+  return transcriptionJobs;
+};
