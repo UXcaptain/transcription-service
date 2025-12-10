@@ -46,5 +46,6 @@ module.exports = {
     'max-len': 'off',
     'no-console': 'off',
     'no-await-in-loop': 'off',
+    'no-plusplus': 'off',
   },
 };
