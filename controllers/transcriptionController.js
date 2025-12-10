@@ -12,33 +12,6 @@ import {
 } from '../models/transcriptionModel.js';
 import { normalizeTranscript } from '../utils/transcriptionJobDataNormalizer.js';
 
-export const handleCompletedVideoTranscriptionJobs = async () => {
-  try {
-    // Get the completed Jobs from AWS Transcribe
-    const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
-
-    if (completedTranscriptionJobsSummary.length === 0) {
-      console.log('no completed transcription jobs available to process');
-      return;
-    }
-    // Iterate over every item
-    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
-      const transcriptionJob = completedTranscriptionJobsSummary[i];
-
-      await processTranscriptionJob(transcriptionJob);
-    }
-    return;
-  } catch (error) {
-    console.log('error processing transcription jobs', error);
-  }
-};
-
-export const requestAnalysisEntryTranscription = async (transcriptionRequest, transcriptionRequestInsertId) => {
-  await requestAnalysisEntryTranscriptionToAWSTranscribe(transcriptionRequest, transcriptionRequestInsertId);
-
-  await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
-};
-
 const processTranscriptionJob = async (transcriptionJob) => {
   try {
     // 1. Get transcription job details from database
@@ -83,3 +56,31 @@ const processTranscriptionJob = async (transcriptionJob) => {
     console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
   }
 };
+
+export const handleCompletedVideoTranscriptionJobs = async () => {
+  try {
+    // Get the completed Jobs from AWS Transcribe
+    const completedTranscriptionJobsSummary = await listCompletedTranscriptionJobsFromAWS();
+
+    if (completedTranscriptionJobsSummary.length === 0) {
+      console.log('no completed transcription jobs available to process');
+      return;
+    }
+    // Iterate over every item
+    for (let i = 0; i < completedTranscriptionJobsSummary.length; i++) {
+      const transcriptionJob = completedTranscriptionJobsSummary[i];
+
+      await processTranscriptionJob(transcriptionJob);
+    }
+  } catch (error) {
+    console.log('error processing transcription jobs', error);
+  }
+};
+
+export const requestAnalysisEntryTranscription = async (transcriptionRequest, transcriptionRequestInsertId) => {
+  await requestAnalysisEntryTranscriptionToAWSTranscribe(transcriptionRequest, transcriptionRequestInsertId);
+
+  await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
+};
+
+
