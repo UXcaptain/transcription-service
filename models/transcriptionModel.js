@@ -61,7 +61,7 @@ export const getSingleTranscriptionJobDetailsFromDb = async (transcriptionJobDet
   return transcriptionJobDetailsResult;
 };
 
-export const storeParsedTranscriptionInDb = async (transcriptionJobInsertId, normalizedTranscriptionJob) => {
+export const storeNormalizedTranscriptionInDb = async (transcriptionJobInsertId, normalizedTranscriptionJob) => {
   const db = await connectToMongoDB();
 
   const transcriptionsCollection = db.collection('transcriptionRequests');

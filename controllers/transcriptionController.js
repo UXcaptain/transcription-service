@@ -3,6 +3,7 @@ import { getS3Object } from '../integrations/AWS/S3.js';
 import { deleteCompletedTranscriptionJobsFromAWS, listCompletedTranscriptionJobsFromAWS, requestAnalysisEntryTranscription } from '../integrations/AWS/Transcribe.js';
 import {
   updateSingleTranscriptionRequestInDb, getSingleTranscriptionJobDetailsFromDb, storeParsedTranscriptionInDb, markTranscriptionAsPublishedToQueue,
+  storeNormalizedTranscriptionInDb,
 } from '../models/transcriptionModel.js';
 import { normalizeTranscript } from '../utils/transcriptionJobDataNormalizer.js';
 
@@ -44,8 +45,8 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
 
           const normalizedTranscriptionJobDataStructure = await normalizeTranscript(transcriptionJobDataStructure);
 
-          // 4. Store parsed data in DB and update status to COMPLETED
-          await storeParsedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
+          // 4. Store normalized transcript in DB and update status to COMPLETED
+          await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
 
           try {
             await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
