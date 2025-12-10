@@ -19,67 +19,17 @@ export const handleCompletedVideoTranscriptionJobs = async () => {
 
     if (completedTranscriptionJobsSummary.length === 0) {
       console.log('no completed transcription jobs available to process');
-    } else {
-    // Iterate over every item
-      for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
-        const transcriptionJob = completedTranscriptionJobsSummary[i];
-
-        try {
-        // 1. Get transcription job details from database
-          const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName); //* Need this step for later usage of analysis details
-
-          if (!transcriptionJobDetails) {
-            throw Error(`job ${transcriptionJob.TranscriptionJobName} details dont exist in DB`);
-          }
-
-          // Skip if already processed - Shouldnt happen if AWS Transcribe job deletion is working properly
-          if (transcriptionJobDetails.publishedToQueue) { // ? What should the condition be?
-            console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
-
-          //   try { // * Delete the transcription job from AWS Transcribe since it has already been completed/published
-          //     await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
-          //   } catch (error) {
-          //     console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
-          //   }
-          //   return;
-          }
-
-          /*
-            ? what im trying to do here is to see if i should process the transcription job or not? maybe it makes sense to reconcile via cron jobs or directly check for both completion and queue publishing conditions?
-          */
-
-    // 2. Construct S3 key and fetch transcription file from AWS
-    const transcriptionJobResult = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
-
-          // 3. Normalize transcription job result
-
-          const normalizedTranscriptionJob = await normalizeTranscript(transcriptionJobResult);
-
-          // 4. Store normalized transcript in DB and update status to COMPLETED
-          await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
-
-          // try {
-          //   await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
-          // } catch (error) {
-          //   console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
-          // }
-
-          // 5. Send normalized transcript to event queue
-
-          await publishToTranscriptionCompletedQueue(transcriptionJobDetails._id, normalizedTranscriptionJob.results.segments);
-
-          // 6. Mark as published to queue in database
-          await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
-
-          return console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
-        } catch (error) {
-          console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
-        // Continue to next item
-        }
-      }
+      return;
     }
+    // Iterate over every item
+    for (let i = 0; i < completedTranscriptionJobsSummary.length; i + 1) {
+      const transcriptionJob = completedTranscriptionJobsSummary[i];
+
+      await processTranscriptionJob(transcriptionJob);
+    }
+    return;
   } catch (error) {
-    console.log('error updating completed transcription jobs', error);
+    console.log('error processing transcription jobs', error);
   }
 };
 
@@ -87,4 +37,49 @@ export const requestAnalysisEntryTranscription = async (transcriptionRequest, tr
   await requestAnalysisEntryTranscriptionToAWSTranscribe(transcriptionRequest, transcriptionRequestInsertId);
 
   await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
+};
+
+const processTranscriptionJob = async (transcriptionJob) => {
+  try {
+    // 1. Get transcription job details from database
+    const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
+
+    // Deleted from AWS if already processed - Shouldnt happen if AWS Transcribe job deletion is working properly
+
+    // if (transcriptionJobDetails.status === 'COMPLETED') { // I just need to handle here duplicate returned entries - reposting them to the queue is a retry job for another function
+    //   console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
+    //   return await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
+    // }
+
+    // 2. Construct S3 key and fetch transcription file from AWS
+    const transcriptionJobResult = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
+
+    // 3. Normalize transcription job result
+
+    const normalizedTranscriptionJob = await normalizeTranscript(transcriptionJobResult);
+
+    // 4. Store normalized transcript in DB and update status to COMPLETED
+    await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
+
+    // try {
+    //   await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
+    // } catch (error) {
+    //   console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
+    // This is not an issue since it will be caught by a CRON-based retry mechanism
+    // }
+
+    try {
+      // 5. Send normalized transcript to event queue
+      await publishToTranscriptionCompletedQueue(transcriptionJobDetails._id, normalizedTranscriptionJob.results.segments);
+
+      // 6. Mark as published to queue in database
+      await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
+    } catch (error) {
+      console.log('error publishing transcription job to queue', error);
+    }
+
+    return console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
+  } catch (error) {
+    console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
+  }
 };
