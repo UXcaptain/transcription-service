@@ -61,7 +61,7 @@ export const getSingleTranscriptionJobDetailsFromDb = async (transcriptionJobDet
   return transcriptionJobDetailsResult;
 };
 
-export const storeNormalizedTranscriptionInDb = async (transcriptionJobInsertId, normalizedTranscriptionJob) => {
+export const storeNormalizedTranscriptionInDb = async (transcriptionJobInsertId, normalizedTranscriptionJob, transcriptionJobResult) => {
   const db = await connectToMongoDB();
 
   const transcriptionsCollection = db.collection('transcriptionRequests');
@@ -71,7 +71,10 @@ export const storeNormalizedTranscriptionInDb = async (transcriptionJobInsertId,
     {
       $set: {
         status: 'COMPLETED',
-        transcriptionData: normalizedTranscriptionJob.results.segments,
+        transcriptionData: {
+          fullTranscript: transcriptionJobResult.results.transcripts[0].transcript,
+          segments: normalizedTranscriptionJob.results.segments,
+        },
         updatedAt: new Date(),
         publishedToQueue: false,
       },
