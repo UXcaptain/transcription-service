@@ -70,11 +70,56 @@ const createSegmentsFromItems = (items) => {
             };
           } else {
             // Continue current segment
-            // Add space before content if current segment doesn't end with punctuation
-            if (!currentSegment.transcript.match(/[.,!?;:]$/)) {
-              currentSegment.transcript += ' ';
+            // Improved logic for adding spaces around punctuation
+            const currentText = currentSegment.transcript;
+            const newContent = content.trim();
+
+            // Don't add space if current text is empty
+            if (currentText.length === 0) {
+              currentSegment.transcript += newContent;
+            } else {
+              // Get the last character of current text and first character of new content
+              const lastChar = currentText[currentText.length - 1];
+              const firstChar = newContent[0];
+
+              // Determine if we need to add space
+              let shouldAddSpace = false;
+
+              // Add space if:
+              // 1. Current text doesn't end with punctuation and new content doesn't start with punctuation
+              // 2. Current text ends with punctuation (except quotes/brackets) and new content starts with a letter/number
+              // 3. Current text ends with letter/number and new content starts with punctuation (.,!?;:)
+              if (!/[.,!?;:)\]}'"]$/.test(lastChar) && !/^[.,!?;:([{'"]/.test(firstChar)) {
+                // Neither ends nor starts with punctuation - add space
+                shouldAddSpace = true;
+              } else if (/[.,!?;:)]'?]*$/.test(lastChar) && /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü0-9]/.test(firstChar)) {
+                // Ends with punctuation and starts with letter/number - add space
+                shouldAddSpace = true;
+              } else if (/[A-Za-zÁÉÍÓÚÑÜáéíóúñü0-9]$/.test(lastChar) && /^[.,!?;:]/.test(firstChar)) {
+                // Ends with letter/number and starts with punctuation - don't add space
+                shouldAddSpace = false;
+              } else if (/[)\]}'"]$/.test(lastChar) && /^[A-Za-zÁÉÍÓÚÑÜáéíóúñü0-9]/.test(firstChar)) {
+                // Ends with closing bracket/quote and starts with letter/number - add space
+                shouldAddSpace = true;
+              }
+
+              // Special handling for common Spanish patterns
+              // Add space after periods followed by capital letters (sentence boundaries)
+              if (/[.] $/.test(lastChar) && /^[A-ZÁÉÍÓÚÑÜ]/.test(firstChar)) {
+                shouldAddSpace = true;
+              }
+
+              // Add space after commas, semicolons, and colons
+              if (/[,;:]$/.test(lastChar)) {
+                shouldAddSpace = true;
+              }
+
+              if (shouldAddSpace) {
+                currentSegment.transcript += ' ';
+              }
+
+              currentSegment.transcript += newContent;
             }
-            currentSegment.transcript += content;
             currentSegment.end_time = endTime;
           }
         }
