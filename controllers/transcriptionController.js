@@ -25,14 +25,16 @@ const processTranscriptionJob = async (transcriptionJob) => {
     }
 
     // 2. Construct S3 key and fetch transcription file from AWS
-    const transcriptionJobResult = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
+    const transcriptionJobResultString = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
 
-    // 3. Normalize transcription job result
+    // 3. Parse the transcription job result (JSON string to object)
+    const transcriptionJobResult = JSON.parse(transcriptionJobResultString);
 
+    // 4. Normalize transcription job result
     const normalizedTranscriptionJob = await normalizeTranscript(transcriptionJobResult);
 
-    // 4. Store normalized transcript in DB and update status to COMPLETED
-    await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
+    // 5. Store normalized transcript in DB and update status to COMPLETED
+    await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob, transcriptionJobResult);
 
     try {
       await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
@@ -51,7 +53,7 @@ const processTranscriptionJob = async (transcriptionJob) => {
       console.log('error publishing transcription job to queue', error);
     }
 
-    return console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
+    console.log(`Successfully processed transcription job: ${transcriptionJob.TranscriptionJobName}`);
   } catch (error) {
     console.error(`Error processing transcription ${transcriptionJob.TranscriptionJobName}:`, error);
   }

@@ -137,21 +137,13 @@ const createSegmentsFromItems = (items) => {
 
 /**
  * Normalizes AWS Transcribe output to the required format
- * @param {string|object} transcript - AWS Transcribe output as JSON string or parsed object
+ * @param {object} transcript - AWS Transcribe output as parsed object
  * @returns {Promise<object>} Normalized transcription data
  */
 export const normalizeTranscript = async (transcript) => {
   try {
-    // Parse the input if it's a string
-    let parsedTranscript;
-    if (typeof transcript === 'string') {
-      parsedTranscript = JSON.parse(transcript);
-    } else {
-      parsedTranscript = transcript;
-    }
-
     // Handle missing or malformed data
-    if (!parsedTranscript) {
+    if (!transcript) {
       return {
         status: 'FAILED',
         results: {
@@ -161,10 +153,10 @@ export const normalizeTranscript = async (transcript) => {
     }
 
     // Extract status
-    const status = parsedTranscript.status || 'UNKNOWN';
+    const status = transcript.status || 'UNKNOWN';
 
     // Extract results section
-    const results = parsedTranscript.results || {};
+    const results = transcript.results || {};
 
     // Extract items array and create segments
     const items = results.items || [];
