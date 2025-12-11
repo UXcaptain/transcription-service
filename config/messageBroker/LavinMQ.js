@@ -98,6 +98,7 @@ export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, t
     await transcriptionCompletedQueue.publish(stringifiedMessage);
   } catch (err) {
     console.error('Error publishing transcription completed message:', err);
+    throw new Error(`Failed to publish transcription job ${transcriptionJobId} to queue: ${err.message}`);
   }
 };
 
