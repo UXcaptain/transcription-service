@@ -42,7 +42,7 @@ export const getCompletedTranscriptions = async () => {
   const transcriptionsCollection = db.collection('transcriptionRequests');
 
   const completedTranscriptions = await transcriptionsCollection.find({
-    sentToQueue: false,
+    publishedToQueue: false,
     status: 'COMPLETED',
   }).toArray();
 
