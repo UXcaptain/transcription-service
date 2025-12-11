@@ -85,10 +85,10 @@ export const connectToMessageBroker = async () => {
   }
 };
 
-export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionJobSegments, fullTranscript) => {
+export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionSegments, fullTranscript) => {
   const message = {
     analysisEntryId: transcriptionJobId,
-    transcriptionJobSegments: transcriptionJobSegments,
+    transcriptionSegments: transcriptionSegments,
     fullTranscript: fullTranscript,
   };
 
