@@ -36,7 +36,7 @@ export const listCompletedTranscriptionJobsFromAWS = async () => {
 };
 
 export const fetchSingleTranscriptionJob = async (analysisId, analysisEntryId) => {
-  const key = process.env.DEPLOY_ENVIRONMENT === 'localhost' ? 'analysis/464d4419-3822-41e6-8d8e-27b1783632df/eabd3179-ece0-4163-8c7e-0e2c728e11e6/transcription.json' : `analysis/${analysisId}/${analysisEntryId}/transcription.json`; //* Debug - Point to the same transcription always
+  const key = process.env.DEPLOY_ENVIRONMENT === 'localhost' ? 'analysis/464d4419-3822-41e6-8d8e-27b1783632df/eabd3179-ece0-4163-8c7e-0e2c728e11e6/transcription.json' : `analysis/${analysisId}/${analysisEntryId}/transcription.json`;
 
   const transcriptionJobResult = await getS3Object(key);
 
