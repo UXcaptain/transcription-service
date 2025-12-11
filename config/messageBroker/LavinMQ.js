@@ -85,10 +85,11 @@ export const connectToMessageBroker = async () => {
   }
 };
 
-export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionJobSegments) => {
+export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionJobSegments, fullTranscript) => {
   const message = {
     analysisEntryId: transcriptionJobId,
-    transcriptionData: transcriptionJobSegments,
+    transcriptionJobSegments: transcriptionJobSegments,
+    fullTranscript: fullTranscript,
   };
 
   const stringifiedMessage = JSON.stringify(message);

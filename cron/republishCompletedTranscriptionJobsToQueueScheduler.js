@@ -10,7 +10,7 @@ export const republishCompletedTranscriptionJobsToQueueScheduler = new CronJob('
     const jobsArrayInCompletedStatusButNotPublishedToQueue = await getTranscriptionJobsInCompletedStatusNotPublishedToQueue();
 
     for (const job of jobsArrayInCompletedStatusButNotPublishedToQueue) {
-      await publishToTranscriptionCompletedQueue(job._id, job.results.segments);
+      await publishToTranscriptionCompletedQueue(job._id, job.transcriptionData.segments, job.transcriptionData.fullTranscript);
 
       await markTranscriptionAsPublishedToQueue(job._id);
     }

@@ -45,7 +45,7 @@ const processTranscriptionJob = async (transcriptionJob) => {
 
     try {
       // 5. Send normalized transcript to event queue
-      await publishToTranscriptionCompletedQueue(transcriptionJobDetails._id, normalizedTranscriptionJob.results.segments);
+      await publishToTranscriptionCompletedQueue(transcriptionJobDetails._id, normalizedTranscriptionJob.results.segments, transcriptionJobResult.results.transcripts[0].transcript);
 
       // 6. Mark as published to queue in database
       await markTranscriptionAsPublishedToQueue(transcriptionJob.TranscriptionJobName);
