@@ -1,7 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { globalErrorHandler } from './middleware/globalErrorHandler.js';
-import { connectToMessageBroker, publishDebuggingCallToTranscriptionRequestedQueue } from './config/messageBroker/LavinMQ.js';
+import { connectToMessageBroker } from './config/messageBroker/LavinMQ.js';
 import { startCronJobs } from './cron/cronJobScheduler.js';
 
 const app = express();
@@ -9,8 +9,6 @@ const server = createServer(app);
 
 connectToMessageBroker();
 startCronJobs();
-
-// await publishDebuggingCallToTranscriptionRequestedQueue(); //* uncomment to send an example message to transcriptionRequestedQueue
 
 //* Middleware to catch & handle errors
 app.use(globalErrorHandler);

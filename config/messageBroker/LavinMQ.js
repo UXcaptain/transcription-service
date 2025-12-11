@@ -1,6 +1,6 @@
 import { AMQPClient } from '@cloudamqp/amqp-client';
-import { insertVideoTranscriptRequestInDb } from '../../models/videoTranscriptionModel.js';
-import { transcriptAnalysisEntry } from '../../controllers/videoTranscriptionController.js';
+import { insertTranscriptionRequestInDb } from '../../models/transcriptionModel.js';
+import { requestAnalysisEntryTranscription } from '../../controllers/transcriptionController.js';
 
 let connection;
 let channel;
@@ -57,10 +57,10 @@ export const connectToMessageBroker = async () => {
         const contentStr = msg.bodyToString();
         const transcriptionRequest = JSON.parse(contentStr);
 
-        const videoTranscriptionRequestInsertId = await insertVideoTranscriptRequestInDb(transcriptionRequest);
+        const transcriptionRequestInsertId = await insertTranscriptionRequestInDb(transcriptionRequest);
 
         try {
-          await transcriptAnalysisEntry(transcriptionRequest, videoTranscriptionRequestInsertId);
+          await requestAnalysisEntryTranscription(transcriptionRequest, transcriptionRequestInsertId);
         } catch (error) {
           console.log('error requesting transcription', error);
           // TODO - add cron to retry failed transcription requests
@@ -70,7 +70,7 @@ export const connectToMessageBroker = async () => {
       } catch (error) {
         console.log('error processing message', error);
         await msg.nack(true); // Requeue on failure // TODO - ADD backoff strategy to prevent infinite loops
-        // await msg.nack(true); //* NOT Requeue on failure - For debugging and avoiding infite loops
+        // await msg.nack(false); //* NOT Requeue on failure - For debugging and avoiding infite loops
       }
     });
 
@@ -85,27 +85,22 @@ export const connectToMessageBroker = async () => {
   }
 };
 
-export const publishToTranscriptionCompletedQueue = async (message) => {
+export const publishToTranscriptionCompletedQueue = async (transcriptionJobId, transcriptionJobSegments) => {
+  const message = {
+    analysisEntryId: transcriptionJobId,
+    transcriptionData: transcriptionJobSegments,
+  };
+
+  const stringifiedMessage = JSON.stringify(message);
+
   try {
-    await transcriptionCompletedQueue.publish(message);
+    await transcriptionCompletedQueue.publish(stringifiedMessage);
   } catch (err) {
     console.error('Error publishing transcription completed message:', err);
   }
 };
 
-export const publishDebuggingCallToTranscriptionRequestedQueue = async () => {
-  const message = {
-    analysisEntryId: '4179f2eb-2405-44f5-a86d-d15c1d21eb5b',
-    analysisId: '70744eb2-f265-4713-959c-4dbeecabe901',
-    timestamp: new Date().toISOString(),
-    mediaType: 'video',
-    languageCode: 'es-ES',
-    outputBucket: 'dev-analysis-entry-storage',
-  };
-
-  const stringifiedMessage = JSON.stringify(message);
-
-  setTimeout(() => {
-    transcriptionRequestedQueue.publish(stringifiedMessage);
-  }, 5000);
-};
+/*
+const debugStringifiedTranscriptionRequestedMessage = { //* send this message on the LavinMQ GUI to test the queue
+  {"analysisEntryId":"4179f2eb-2405-44f5-a86d-d15c1d21eb5b","analysisId":"70744eb2-f265-4713-959c-4dbeecabe901","timestamp":"2025-11-13T21:21:11.830Z","mediaType":"video","languageCode":"es-ES"}
+*/
