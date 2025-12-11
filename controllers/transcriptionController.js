@@ -17,12 +17,12 @@ const processTranscriptionJob = async (transcriptionJob) => {
     // 1. Get transcription job details from database
     const transcriptionJobDetails = await getSingleTranscriptionJobDetailsFromDb(transcriptionJob.TranscriptionJobName);
 
-    // Deleted from AWS if already processed - Shouldnt happen if AWS Transcribe job deletion is working properly
+    // Delete from AWS Transcribe if already processed - Shouldnt happen if AWS Transcribe job deletion is working properly
 
-    // if (transcriptionJobDetails.status === 'COMPLETED') { // I just need to handle here duplicate returned entries - reposting them to the queue is a retry job for another function
-    //   console.log(`Skipping already processed job: ${transcriptionJob.TranscriptionJobName}`);
-    //   return await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
-    // }
+    if (transcriptionJobDetails.status === 'COMPLETED') { // I just need to handle here duplicate returned entries - reposting them to the queue is a retry job for another function
+      console.log(`Deleting already processed job: ${transcriptionJob.TranscriptionJobName}`);
+      return await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
+    }
 
     // 2. Construct S3 key and fetch transcription file from AWS
     const transcriptionJobResult = await fetchSingleTranscriptionJob(transcriptionJobDetails.analysisId, transcriptionJobDetails._id);
@@ -34,12 +34,12 @@ const processTranscriptionJob = async (transcriptionJob) => {
     // 4. Store normalized transcript in DB and update status to COMPLETED
     await storeNormalizedTranscriptionInDb(transcriptionJob.TranscriptionJobName, normalizedTranscriptionJob);
 
-    // try {
-    //   await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
-    // } catch (error) {
-    //   console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
-    // This is not an issue since it will be caught by a CRON-based retry mechanism
-    // }
+    try {
+      await deleteCompletedTranscriptionJobFromAWS(transcriptionJob.TranscriptionJobName);
+    } catch (error) {
+      console.log(`failed to delete transcription job ${transcriptionJob.TranscriptionJobName}`, error);
+    // This failing is not an issue since it will be caught by a CRON-based retry mechanism
+    }
 
     try {
       // 5. Send normalized transcript to event queue
@@ -82,5 +82,3 @@ export const requestAnalysisEntryTranscription = async (transcriptionRequest, tr
 
   await updateSingleTranscriptionRequestInDb(transcriptionRequestInsertId);
 };
-
-

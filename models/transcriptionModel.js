@@ -90,7 +90,8 @@ export const markTranscriptionAsPublishedToQueue = async (transcriptionJobInsert
     { _id: transcriptionJobInsertId },
     {
       $set: {
-        publishedToQueue: false,
+        // publishedToQueue: false, // * DEBUG
+        publishedToQueue: true,
         updatedAt: new Date(),
       },
     },
